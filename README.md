@@ -2,7 +2,7 @@
 
 A minimalist, web-based PostgreSQL client for local development. Runs entirely in your browser at `localhost:3000` — no Electron, no cloud, no external services.
 
-![pg·client screenshot](https://raw.githubusercontent.com/linder3hs/pg-client/main/public/screenshot.png)
+<img width="800" height="400" alt="Screenshot 2026-04-30 at 3 06 22 PM" src="https://github.com/user-attachments/assets/0f515f31-eb9b-4182-b9ec-f69c8f6ca5dc" />
 
 ## Features
 
