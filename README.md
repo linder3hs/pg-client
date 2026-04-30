@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# pg·client
+
+A minimalist, web-based PostgreSQL client for local development. Runs entirely in your browser at `localhost:3000` — no Electron, no cloud, no external services.
+
+![pg·client screenshot](https://raw.githubusercontent.com/linder3hs/pg-client/main/public/screenshot.png)
+
+## Features
+
+- **Connection manager** — save multiple local PostgreSQL connections (stored in `data/connections.json`)
+- **Schema browser** — lazy-loaded tree: databases → schemas → tables → columns with row counts
+- **SQL editor** — CodeMirror 6 with syntax highlighting, autocomplete, and `Ctrl+Enter` to run
+- **Multi-tab editing** — independent editor state per tab, persisted across reloads
+- **Virtualized results grid** — handles 100k+ rows without breaking a sweat (TanStack Virtual)
+- **Query history** — last 500 queries with timing, row count, and one-click restore
+- **CSV export** — download any result set instantly
+- **Dark theme** — easy on the eyes during long debugging sessions
+
+## Stack
+
+| Layer | Library |
+|-------|---------|
+| Framework | Next.js 16 (App Router) |
+| Database driver | pg (node-postgres) |
+| SQL editor | CodeMirror 6 |
+| Virtual grid | TanStack Virtual 3 |
+| State | Zustand 5 |
+| Styles | Tailwind CSS 4 |
+| Icons | Lucide React |
 
 ## Getting Started
 
-First, run the development server:
+**Prerequisites:** Node.js 18+ and at least one local PostgreSQL instance.
 
 ```bash
+# Clone
+git clone https://github.com/linder3hs/pg-client.git
+cd pg-client
+
+# Install dependencies
+npm install
+
+# Start the dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000), add your first connection, and start querying.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How it works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- API routes run server-side inside the Next.js process — the `pg` driver connects directly to your local Postgres, so there's no CORS or proxy needed.
+- Connection credentials are stored in `data/connections.json` (gitignored). This is a **local dev tool** — do not expose it to the internet.
+- A connection pool (`Map<connectionId::database, Pool>`) is kept alive across requests in the same process for fast response times.
+- Query history is persisted to `localStorage` via Zustand's persist middleware.
 
-## Learn More
+## Project structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/
+│   ├── connections/          # Connection manager page
+│   ├── workspace/[id]/       # Main editor workspace
+│   └── api/                  # Server-side API routes
+│       ├── connections/      # CRUD + test
+│       ├── query/            # SQL execution
+│       └── schema/           # Schema tree endpoints
+├── components/
+│   ├── browser/              # Schema tree
+│   ├── connections/          # Connection form + list
+│   ├── editor/               # SQL editor + tabs + toolbar
+│   └── results/              # Results grid + history panel
+└── lib/
+    ├── db/                   # Pool management + queries
+    └── store/                # Zustand stores
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change.
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT © [Linder Hassinger](https://github.com/linder3hs)

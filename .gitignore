@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local connection data (contains credentials)
+/data/connections.json
+
+# AI agent config (internal dev tooling)
+CLAUDE.md
+AGENTS.md
