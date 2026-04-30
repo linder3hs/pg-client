@@ -34,6 +34,8 @@ interface SchemaStore {
     schema: string,
     table: string
   ) => { columns: Column[]; rowCount: number | null } | undefined
+  invalidateDatabases: (connectionId: string) => void
+  invalidateTables: (connectionId: string, database: string, schema: string) => void
 }
 
 export const useSchemaStore = create<SchemaStore>((set, get) => ({
@@ -83,4 +85,18 @@ export const useSchemaStore = create<SchemaStore>((set, get) => ({
     get().cache.tables[`${connectionId}/${database}/${schema}`],
   getTableDetail: (connectionId, database, schema, table) =>
     get().cache.columns[`${connectionId}/${database}/${schema}/${table}`],
+
+  invalidateDatabases: (connectionId) =>
+    set((s) => {
+      const databases = { ...s.cache.databases }
+      delete databases[connectionId]
+      return { cache: { ...s.cache, databases } }
+    }),
+
+  invalidateTables: (connectionId, database, schema) =>
+    set((s) => {
+      const tables = { ...s.cache.tables }
+      delete tables[`${connectionId}/${database}/${schema}`]
+      return { cache: { ...s.cache, tables } }
+    }),
 }))

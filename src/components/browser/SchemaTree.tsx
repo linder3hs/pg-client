@@ -2,6 +2,8 @@
 import { useState, useCallback } from 'react'
 import { Database, Layers, Table2, Eye, Columns3, Search } from 'lucide-react'
 import { TreeNode } from './TreeNode'
+import { CreateDatabaseModal } from './CreateDatabaseModal'
+import { CreateTableModal } from './CreateTableModal'
 import { useSchemaStore } from '@/lib/store/schema'
 import { useEditorStore } from '@/lib/store/editor'
 import type { Column, TableInfo } from '@/types/schema'
@@ -17,6 +19,8 @@ async function fetchJson<T>(url: string): Promise<T> {
   return data as T
 }
 
+type CreateTableCtx = { database: string; schema: string }
+
 export function SchemaTree({ connectionId }: Props) {
   const store = useSchemaStore()
   const { activeTabId, updateTabSql, updateTabDatabase } = useEditorStore()
@@ -24,6 +28,8 @@ export function SchemaTree({ connectionId }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [search, setSearch] = useState('')
   const [showSystem, setShowSystem] = useState(false)
+  const [createDbOpen, setCreateDbOpen] = useState(false)
+  const [createTableCtx, setCreateTableCtx] = useState<CreateTableCtx | null>(null)
 
   const setLoad = (key: string, v: boolean) =>
     setLoading((s) => { const n = new Set(s); v ? n.add(key) : n.delete(key); return n })
@@ -93,6 +99,23 @@ export function SchemaTree({ connectionId }: Props) {
     updateTabDatabase(activeTabId, db)
   }, [activeTabId, updateTabSql, updateTabDatabase])
 
+  function handleDatabaseCreated(name: string) {
+    store.invalidateDatabases(connectionId)
+    // clear expanded so tree re-fetches
+    if (store.expanded.has(connectionId)) {
+      store.toggle(connectionId) // collapse
+      store.toggle(connectionId) // re-expand triggers re-fetch on next render
+    }
+    fetchDatabases()
+  }
+
+  function handleTableCreated(database: string, schema: string) {
+    store.invalidateTables(connectionId, database, schema)
+    const schKey = `${connectionId}/${database}/${schema}`
+    // force re-fetch by re-expanding the schema
+    fetchTables(database, schema)
+  }
+
   const rawDbs = store.getDatabases(connectionId)
   const databases = Array.isArray(rawDbs) ? rawDbs : undefined
 
@@ -117,6 +140,8 @@ export function SchemaTree({ connectionId }: Props) {
           expanded={isExpanded(connectionId)}
           loading={loading.has(connectionId)}
           onToggle={fetchDatabases}
+          onAdd={() => setCreateDbOpen(true)}
+          addTitle="Create database"
           icon={<Database size={13} className="text-[#555]" />}
         >
           {errors[connectionId] && <ErrRow msg={errors[connectionId]} depth={1} />}
@@ -147,6 +172,8 @@ export function SchemaTree({ connectionId }: Props) {
                     <TreeNode key={schema} label={schema} depth={2} muted={isSystem}
                       expanded={isExpanded(schKey)} loading={loading.has(schKey)}
                       onToggle={() => fetchTables(db, schema)}
+                      onAdd={isSystem ? undefined : () => setCreateTableCtx({ database: db, schema })}
+                      addTitle="Create table"
                       icon={<Layers size={12} className={isSystem ? 'text-[#333]' : 'text-[#4a6a8a]'} />}
                     >
                       {errors[schKey] && <ErrRow msg={errors[schKey]} depth={3} />}
@@ -198,6 +225,23 @@ export function SchemaTree({ connectionId }: Props) {
           })}
         </TreeNode>
       </div>
+
+      {createDbOpen && (
+        <CreateDatabaseModal
+          connectionId={connectionId}
+          onClose={() => setCreateDbOpen(false)}
+          onCreated={handleDatabaseCreated}
+        />
+      )}
+      {createTableCtx && (
+        <CreateTableModal
+          connectionId={connectionId}
+          database={createTableCtx.database}
+          schema={createTableCtx.schema}
+          onClose={() => setCreateTableCtx(null)}
+          onCreated={() => handleTableCreated(createTableCtx.database, createTableCtx.schema)}
+        />
+      )}
     </div>
   )
 }
