@@ -39,6 +39,9 @@ cd pg-client
 # Install dependencies
 npm install
 
+# Install dependencies (locked versions, no updates)
+npm ci
+
 # Start the dev server
 npm run dev
 ```
